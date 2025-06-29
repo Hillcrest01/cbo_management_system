@@ -1,0 +1,107 @@
+Step 1: Create a new application using composer( I assume you have php, Xampp and composer installed in your machine) using:
+	composer create-project laravel/laravel your-app-name
+
+Step 2:Configure database, if you are using MySQL, then change it to MySQL and give the configurations i.e. username, password and the database name(default is laravel).
+These can be found in the .env file. Also make the changes in the config/database.php.
+
+Step 3: Create the database in MySQL, you can access this via phpmyadmin after powering the Apache Server and MySQL in Xampp.
+
+
+Step 4: Install laravel breeze to be used in authentication. Laravels gives us the authentication template which can just be implemented in our system via laravel breeze:
+Download via: composer require laravel/breeze --dev
+Install via php artisan breeze:install
+Make some changes in the user migration by adding your columns not included by the default template.
+Then do the migration via php artisan migrate to save the table Users to the database.
+You will then need to install and run npm via npm install then npm run dev.
+
+Depending on the laravel version you are using and the engine you are using to load the styles, you can edit the layouts/app andd layouts/guest accordingly i.e. when using vite or laravel mix.
+
+Step 5: Working on Role Based Access Control.
+You will need to create a HomeController via:
+	 php artisan make:controller HomeController
+Then we will create a route for the administrator's dashboard,
+Navigate to routes/web.php
+Add this route:
+==============================================================
+Route::get('/admin/dashboard', [HomeController::class , 'index']) 
+
+This means that it is a route, should accept a get request, then it will navigate to admin/dashboard,
+Then pass the controll to HomeController controller and in that controller look for index function.
+============================================================
+
+Then inside your HomeController, create the index function using public function index(){}
+===============================Then inside it return view('admin.index)=======================
+This means that check for a blade.php file called index inside the resources/views/admin folder.
+Since we do not have the folder, proceed to create it and add a simple code for testing.
+
+
+We then need to direct administrators to this page whenever they log in.
+
+Step 6: Redirect Administrators to the admin/dashboard.
+We check in the AuthenticatedSessionController and after creating the session, we check if the 
+user role is admin and direct them to this page.
+
+===========if($request->user()->role()=== 'admin'){
+	return redirect(admin/dashboard) ===========the name of the route===========
+}
+After that, all the admins will be directed to that page. But wait, we have a problem, even those
+who are not admins can access the route and this is a big challenge.
+To prevent this we are going to create a middleware to include this condition.
+===========php artisan make:middleware Admin ===========
+This will create a middleware called Admins and inside that middleware we will create a condition.
+
+======if(Auth::user()->role != 'admin){
+	return redirect('/')
+}======
+
+======This shows that if the current user is not an admin, direct the user to the index page.
+And so whenever we will call this middleware in a route, this condition will apply.======
+
+We then need to register our middleware for our application to know where it is and use it.
+This is done in the app/Http/Kernel
+======inside the protected $routeMiddleware====== include this:
+======'admin' = \App\Http\Middleware\Admin::class,======  (basically the direction of the middleware)
+
+So for the routes that we need to be secured for admin only, we will be including this middleware.
+for example, in our admin/dashboard,
+The route was: Route::get('/admin/dashboard', [HomeController::class, 'index'])
+
+Now we add the following:
+====== ->middleware(['auth', 'admin'])
+And the full route now becomes:
+ Route::get('/admin/dashboard', [HomeController::class, 'index'])->middleware(['auth', 'admin']);
+
+ Therefore anyone who tries to access this route and is not an admin will be directed back to the homepage
+
+======Perform the testing======
+
+======So far we have been able to create a laravel project, add authentication using breeze, style using 
+laravel mix and bootstrap configuration, add role based access and learn a little bit about
+middleware.======
+
+Step 7:======Add content to the homepage and the admin======
+You can use a template i.e. by visiting bootstrap templates. Ensure the styles are working.
+
+===============================LEFT AT================================
+On the verge of getting the add meeting data from the form, record to the database.
+
+==============TIME TO ADD DATA TO THE DATABASE========
+
+Based on my project (CBO), I will start by letting the admin add a new meeting.
+
+Create a link in the admin dashboard that should allow the admin to add a new meeting.
+href the link to a get url, then in the url, give a function in the AdminController and go ahead to define the function.
+The function should just simply return a blade template.
+In the template, create a form that should capture the data, and let the action point another post url.
+DO NOT FORGET THE csrf tokens.
+Create the function that is pointed by the url, then in that function create an instance of the model.
+use that instance with the $request to get the data from the form and save the data, you can choose to toastr a message
+to show the user success of this functionality then redirect the user to a given page or simply back.
+WITHOUT THE CSRF TOKENS WHEN USING FORMS YOU WILL GET A 'PAGE EXPIRED ERROR'
+
+Create the model and the migration using php artisan make:model Model_Name
+
+Add the columns and run php artisan migrate to do the migration to the database.
+Proceed to add the edit and delete functionalities of the given module.
+
+
